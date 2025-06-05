@@ -437,6 +437,7 @@ const settings = useStorage("mapcheckr_settings", {
         randomInRange: false,
     },
 });
+settings.value.filterByDate.to = dateToday
 
 const areHeadingSettingsGood = computed(
     () =>
