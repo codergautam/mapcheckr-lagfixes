@@ -45,7 +45,8 @@ export default function SVreq(loc, settings) {
             const isPanned = loc.heading !== 0;
 
             // Filter by gen
-            if (!settings.filterByGen[cameraGeneration]) {
+            // Skip generation filter for unofficial coverage (gen 0) when rejectUnofficial is false
+            if (cameraGeneration !== 0 && !settings.filterByGen[cameraGeneration]) {
                 return reject({ ...loc, reason: "WRONG_GENERATION" });
             }
 
