@@ -265,110 +265,19 @@
                 </p>
             </div>
 
-            <div v-if="state.finished" class="container">
-                <h2 class="center">Export</h2>
-                <div class="flex-center wrap space-between">
-                    <h3 class="success">
-                        {{ resolvedLocs.length }} resolved {{ pluralize("location", resolvedLocs.length) }} ({{
-                            ((resolvedLocs.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div v-if="resolvedLocs.length" class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="resolvedLocs" />
-                        <ExportToJSON :data="resolvedLocs" />
-                        <ExportToCSV :data="resolvedLocs" />
-                    </div>
-                </div>
-
-                <hr />
-                <div class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        {{ allRejectedLocs.length }} rejected locations ({{
-                            ((allRejectedLocs.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="allRejectedLocs" />
-                        <ExportToJSON :data="allRejectedLocs" isRejected />
-                        <ExportToCSV :data="allRejectedLocs" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.SVNotFound.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.SVNotFound.length }} SV not found ({{
-                            ((rejectedLocs.SVNotFound.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.SVNotFound" />
-                        <ExportToJSON :data="rejectedLocs.SVNotFound" isRejected />
-                        <ExportToCSV :data="rejectedLocs.SVNotFound" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.unofficial.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.unofficial.length }} unofficial ({{
-                            ((rejectedLocs.unofficial.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.unofficial" />
-                        <ExportToJSON :data="rejectedLocs.unofficial" isRejected />
-                        <ExportToCSV :data="rejectedLocs.unofficial" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.noDescription.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.noDescription.length }} no description (potential trekker) ({{
-                            ((rejectedLocs.noDescription.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.noDescription" />
-                        <ExportToJSON :data="rejectedLocs.noDescription" isRejected />
-                        <ExportToCSV :data="rejectedLocs.noDescription" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.wrongGeneration.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.wrongGeneration.length }} wrong camera generation ({{
-                            ((rejectedLocs.wrongGeneration.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.wrongGeneration" />
-                        <ExportToJSON :data="rejectedLocs.wrongGeneration" isRejected />
-                        <ExportToCSV :data="rejectedLocs.wrongGeneration" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.outOfDateRange.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.outOfDateRange.length }} doesn't match date criteria ({{
-                            ((rejectedLocs.outOfDateRange.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.outOfDateRange" />
-                        <ExportToJSON :data="rejectedLocs.outOfDateRange" isRejected />
-                        <ExportToCSV :data="rejectedLocs.outOfDateRange" isRejected />
-                    </div>
-                </div>
-                <div v-if="rejectedLocs.isolated.length" class="flex-center wrap space-between">
-                    <h3 class="danger">
-                        - {{ rejectedLocs.isolated.length }} isolated {{ settings.rejectNoLinks ? "" : " and unpanned" }} ({{
-                            ((rejectedLocs.isolated.length / customMap.nbLocs) * 100).toFixed(2)
-                        }}%)
-                    </h3>
-                    <div class="flex-center wrap gap-02">
-                        <CopyToClipboard :data="rejectedLocs.isolated" />
-                        <ExportToJSON :data="rejectedLocs.isolated" isRejected />
-                        <ExportToCSV :data="rejectedLocs.isolated" isRejected />
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="state.finished && resolvedLocs.length > 0" class="container">
-                <Distribution :locations="resolvedLocs" />
+            <div v-if="state.finished" class="container center">
+                <h2>Export</h2>
+                <p class="success mb-1">
+                    {{ resolvedLocs.length }} resolved {{ pluralize("location", resolvedLocs.length) }} ({{
+                        ((resolvedLocs.length / customMap.nbLocs) * 100).toFixed(2)
+                    }}%)
+                </p>
+                <p class="danger mb-1">
+                    {{ allRejectedLocs.length }} rejected {{ pluralize("location", allRejectedLocs.length) }} ({{
+                        ((allRejectedLocs.length / customMap.nbLocs) * 100).toFixed(2)
+                    }}%)
+                </p>
+                <Button v-if="resolvedLocs.length" @click="downloadFixedJSON" text="Download Fixed JSON" />
             </div>
         </div>
     </div>
@@ -384,10 +293,6 @@ import Button from "@/components/Elements/Button.vue";
 import Checkbox from "@/components/Elements/Checkbox.vue";
 import Badge from "@/components/Elements/Badge.vue";
 import Spinner from "@/components/Elements/Spinner.vue";
-import CopyToClipboard from "@/components/CopyToClipboard.vue";
-import ExportToJSON from "@/components/ExportToJSON.vue";
-import ExportToCSV from "./components/ExportToCSV.vue";
-import Distribution from "@/components/CountryDistribution.vue";
 
 const dateToday = new Date().getFullYear() + "-" + ("0" + (new Date().getMonth() + 1)).slice(-2);
 
@@ -671,6 +576,16 @@ const haversineDistance = (mk1, mk2) => {
 };
 
 const pluralize = (text, count) => (count > 1 ? text + "s" : text);
+
+const downloadFixedJSON = () => {
+    const blob = new Blob([JSON.stringify(resolvedLocs)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${resolvedLocs.length} resolved locations.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+};
 </script>
 
 <style>
