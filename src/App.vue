@@ -250,6 +250,7 @@
                     <Spinner />
                 </h2>
                 <h2 v-else>Results</h2>
+                <Button v-if="!state.finished && state.success > 0" @click="downloadFixedJSON" class="mb-1" text="Download Current Progress" />
                 <p><Badge :text="state.step + '/' + customMap.nbLocs" /> {{ pluralize("location", customMap.nbLocs) }}</p>
                 <p><Badge :number="state.success" /> success</p>
                 <p><Badge changeClass :number="state.SVNotFound" /> streetview not found</p>
@@ -287,6 +288,7 @@
 import { reactive, ref, computed } from "vue";
 import { useStorage } from "@vueuse/core";
 import SVreq from "@/utils/SVreq";
+import { removeNearbyAsync } from "@/utils/spatialGrid";
 
 import Slider from "@vueform/slider";
 import Button from "@/components/Elements/Button.vue";
@@ -436,16 +438,18 @@ const handleNearbyRadiusInput = (e) => {
     }
 };
 
-Array.prototype.chunk = function (n) {
-    if (!this.length) {
-        return [];
+// Iterative chunk to avoid stack overflow on large arrays
+function chunkArray(arr, n) {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += n) {
+        chunks.push(arr.slice(i, i + n));
     }
-    return [this.slice(0, n)].concat(this.slice(n).chunk(n));
-};
+    return chunks;
+}
 
 const start = async () => {
-    const chunkSize = 500;
-    for (let locationGroup of mapToCheck.chunk(chunkSize)) {
+    const chunkSize = 1000;
+    for (let locationGroup of chunkArray(mapToCheck, chunkSize)) {
         const responses = await Promise.allSettled(locationGroup.map((l) => SVreq(l, settings.value)));
         for (let response of responses) {
             if (response.status === "fulfilled") {
@@ -483,20 +487,28 @@ const start = async () => {
         }
     }
     if (settings.value.removeNearby) {
-        const newArr = removeNearby(resolvedLocs, settings.value.nearbyRadius);
+        // Use async spatial grid algorithm - O(N) instead of O(N²)
+        // This prevents main thread freeze on large datasets
+        const newArr = await removeNearbyAsync(
+            resolvedLocs,
+            settings.value.nearbyRadius,
+            (current, total) => {
+                // Optional: could add a progress indicator here
+            }
+        );
         state.tooClose = resolvedLocs.length - newArr.length;
-        resolvedLocs.length = 0;
-        resolvedLocs.push(...newArr);
+        resolvedLocs = newArr;
     }
 
-    allRejectedLocs = [
-        ...rejectedLocs.SVNotFound,
-        ...rejectedLocs.unofficial,
-        ...rejectedLocs.noDescription,
-        ...rejectedLocs.wrongGeneration,
-        ...rejectedLocs.outOfDateRange,
-        ...rejectedLocs.isolated,
-    ];
+    // Use concat instead of spread to reduce memory pressure
+    allRejectedLocs = [].concat(
+        rejectedLocs.SVNotFound,
+        rejectedLocs.unofficial,
+        rejectedLocs.noDescription,
+        rejectedLocs.wrongGeneration,
+        rejectedLocs.outOfDateRange,
+        rejectedLocs.isolated
+    );
 
     state.finished = true;
 };
@@ -546,39 +558,27 @@ const checkJSON = (data) => {
     }
 };
 
-const removeNearby = (arr, radius) => {
-    const newArr = [];
-    arr.forEach((point) => {
-        const hasClosePoint = newArr.some(
-            (found) => haversineDistance({ lat: point.lat, lng: point.lng }, { lat: found.lat, lng: found.lng }) < radius
-        );
-        if (!hasClosePoint) newArr.push(point);
-    });
-    return newArr;
-};
-
-const haversineDistance = (mk1, mk2) => {
-    const R = 6371.071;
-    const rlat1 = mk1.lat * (Math.PI / 180);
-    const rlat2 = mk2.lat * (Math.PI / 180);
-    const difflat = rlat2 - rlat1;
-    const difflon = (mk2.lng - mk1.lng) * (Math.PI / 180);
-    const km =
-        2 *
-        R *
-        Math.asin(
-            Math.sqrt(
-                Math.sin(difflat / 2) * Math.sin(difflat / 2) +
-                    Math.cos(rlat1) * Math.cos(rlat2) * Math.sin(difflon / 2) * Math.sin(difflon / 2)
-            )
-        );
-    return km * 1000;
-};
-
 const pluralize = (text, count) => (count > 1 ? text + "s" : text);
 
-const downloadFixedJSON = () => {
-    const blob = new Blob([JSON.stringify(resolvedLocs)], { type: "application/json" });
+const downloadFixedJSON = async () => {
+    // For large arrays, serialize in chunks to avoid blocking main thread
+    const chunks = [];
+    const chunkSize = 10000;
+
+    chunks.push('[');
+    for (let i = 0; i < resolvedLocs.length; i += chunkSize) {
+        const slice = resolvedLocs.slice(i, i + chunkSize);
+        const serialized = slice.map(loc => JSON.stringify(loc)).join(',');
+        if (i > 0) chunks.push(',');
+        chunks.push(serialized);
+        // Yield to browser between chunks
+        if (i + chunkSize < resolvedLocs.length) {
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        }
+    }
+    chunks.push(']');
+
+    const blob = new Blob(chunks, { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
