@@ -1,0 +1,14 @@
+# Whitelist via package.json `files` instead — this file is here to make
+# sure publish never accidentally ships test fixtures even if someone
+# loosens `files`.
+
+*.json
+!package.json
+node_modules
+.git
+.gitignore
+.claude
+*.fixed.json
+*.rejected.json
+world-arbitrary.json
+260249 resolved locations.json

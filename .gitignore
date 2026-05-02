@@ -1,5 +1,10 @@
 node_modules
 .DS_Store
-dist
-dist-ssr
 *.local
+
+# Test fixtures / outputs — these can be huge
+*.fixed.json
+*.rejected.json
+world-arbitrary.json
+260249 resolved locations.json
+.claude/
