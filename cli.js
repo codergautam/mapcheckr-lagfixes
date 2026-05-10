@@ -17,11 +17,13 @@ const REJECTION_REASONS = [
     "SV_NOT_FOUND", "UNOFFICIAL", "NO_DESCRIPTION",
     "WRONG_GENERATION", "OUT_OF_DATE_RANGE", "ISOLATED", "OTHER",
 ];
+const packageVersion = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 
 const program = new Command();
 program
     .name("mapcheckr")
     .description("Reverse-engineered Geoguessr map checker. Fast CLI version of mapcheckr.vercel.app.")
+    .version(packageVersion, "-v, --version", "display version")
     .showHelpAfterError("(run `mapcheckr --help` for the full option list)")
     .argument("<input>", "Input JSON map file (raw array or { customCoordinates: [...] })")
     .option("-o, --output <file>", "Output JSON file (default: <input>.fixed.json)")
@@ -165,7 +167,7 @@ if (opts.worldguessr) {
         filterBy: { panoID: true, nonPanoID: true, panned: true, unpanned: true },
         directionBy: { 1: "link", 23: "link", 4: "link", DEAD_END: "link" },
     };
-    settings.pitch = { updatePitch: true, range: [5, 5], randomInRange: false, onlyIfMissing: true };
+    settings.pitch = { updatePitch: true, range: [5, 5], randomInRange: false };
     settings.zoom  = { updateZoom: false, range: [0, 0], randomInRange: false };
     opts.fixInPlace = true;
 }
