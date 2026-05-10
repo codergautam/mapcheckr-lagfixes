@@ -163,9 +163,9 @@ if (opts.worldguessr) {
         range: [0, 0],
         randomInRange: false,
         filterBy: { panoID: true, nonPanoID: true, panned: true, unpanned: true },
-        directionBy: { 1: "forward", 23: "forward", 4: "forward", DEAD_END: "forward" },
+        directionBy: { 1: "link", 23: "link", 4: "link", DEAD_END: "link" },
     };
-    settings.pitch = { updatePitch: true, range: [0, 0], randomInRange: false };
+    settings.pitch = { updatePitch: true, range: [5, 5], randomInRange: false, onlyIfMissing: true };
     settings.zoom  = { updateZoom: false, range: [0, 0], randomInRange: false };
     opts.fixInPlace = true;
 }

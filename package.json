@@ -1,10 +1,10 @@
 {
 	"name": "mapcheckr-cli",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"description": "Fast Geoguessr map checker — same defaults as mapcheckr.vercel.app, runs against the reverse-engineered Google Street View metadata endpoints. No headless browser, no API key.",
 	"type": "module",
 	"bin": {
-		"mapcheckr": "./cli.js"
+		"mapcheckr": "cli.js"
 	},
 	"main": "./cli.js",
 	"files": [
